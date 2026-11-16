@@ -7,11 +7,13 @@ module.exports = async (req, res) => {
 
   const { nama, jurusan, email, kode, pdf, jenis } = req.body || {};
   const dosen = jenis === "dosen";
+  const umkm = jenis === "umkm";
+  const tanpaJurusan = dosen || umkm;
 
   if (process.env.KODE_AKSES && kode !== process.env.KODE_AKSES)
     return res.status(403).json({ error: "Kode akses salah." });
 
-  if (!nama || !email || !pdf || (!dosen && !jurusan))
+  if (!nama || !email || !pdf || (!tanpaJurusan && !jurusan))
     return res.status(400).json({ error: "Data belum lengkap." });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 120)
     return res.status(400).json({ error: "Format email tidak valid." });
@@ -26,7 +28,11 @@ module.exports = async (req, res) => {
       auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
     });
 
-    const isi = dosen
+    const isi = umkm
+      ? `<p>Yth. Pimpinan/Pemilik <b>${esc(nama)}</b>,</p>
+         <p>Terima kasih atas kerja sama dan partisipasi Bapak/Ibu sebagai mitra UMKM dalam Capstone Project 2026/2027 Program Studi Bisnis Digital.
+         Sertifikat penghargaan terlampir pada email ini.</p>`
+      : dosen
       ? `<p>Yth. <b>${esc(nama)}</b>,</p>
          <p>Terima kasih atas peran Bapak/Ibu sebagai dosen pengampu dalam Capstone Project 2026/2027 Program Studi Bisnis Digital.
          Sertifikat penghargaan terlampir pada email ini.</p>`
